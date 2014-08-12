@@ -21,14 +21,14 @@ query_res <- sqldf("select SCC from SCC_DF where EI_Sector like '%vehicle%'")
 vehicle_SCCs <- as.character(query_res[["SCC"]]) # from query_res (DF) to characters vector
 
 # now I can make the plot
+png("plot6.png", width = 600, height = 360, units = "px")
 
-vehicle_plot <- qplot(data = subset(NEI, (SCC %in% vehicle_SCCs) & 
-                                        (fips %in% c("24510","06037"))), 
-                      x = year, y = Emissions,
-                      stat="summary", fun.y = "log10sum",
-                      color = fips) # I plot the sum of emissions for each year
+qplot(data = subset(NEI, (SCC %in% vehicle_SCCs) & 
+                                    (fips %in% c("24510","06037"))), 
+                  x = year, y = Emissions,
+                  stat="summary", 
+                  fun.y = "log10sum", # I plot the sum of emissions for each year
+                  color = fips,
+                  xlab = "Year", ylab = "log10 Emissions")
 
-vehicle_plot + xlab("Year") + ylab("log10 Emissions")
-
-dev.copy(png,file = "plot6.png")
 dev.off()

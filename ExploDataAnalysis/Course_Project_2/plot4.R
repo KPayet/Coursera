@@ -1,7 +1,7 @@
 #NEI <- readRDS("exdata_data_NEI_data/summarySCC_PM25.rds")
-#SCC_DF <- readRDS("exdata_data_NEI_data/Source_Classification_Code.rds")
+SCC_DF <- readRDS("exdata_data_NEI_data/Source_Classification_Code.rds")
 #library(ggplot2)
-#library(sqldf)
+library(sqldf)
 
 # First, we need to find out the SCCs (col.1 in NEI) 
 # of all coal combustion-related sources 
@@ -17,11 +17,11 @@ coal_SCCs <- as.character(query_res[["SCC"]]) # from query_res (DF) to character
 
 # now I can make the plot
 
-coal_plot <- qplot(data = subset(NEI, SCC %in% coal_SCCs), # only for coal emissions
-                   x = year, y = Emissions, # 
-                   stat="summary", fun.y = "sum") # I plot the sum of emissions for each year
+png("plot4.png")
 
-coal_plot
+qplot(data = subset(NEI, SCC %in% coal_SCCs), # only for coal emissions
+               x = year, y = Emissions, # 
+               stat="summary", fun.y = "sum", # I plot the sum of emissions for each year
+               main = "PM25 Emissions from coal combustion for 1999-2008") 
 
-dev.copy(png, file = "plot4.png")
 dev.off()

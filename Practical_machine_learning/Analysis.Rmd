@@ -1,0 +1,53 @@
+---
+title: "Practical Machine Learning Project"
+author: "Kevin Payet"
+date: "Friday, September 12, 2014"
+output: html_document
+---
+
+# Getting and preparing the data
+
+```{r}
+if(!file.exists("pml-training.csv")) {
+    url_train <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"
+    download.file(url_train, destfile = "./pml-training.csv")
+    
+    url_test <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"
+    download.file(url_test, destfile = "./pml-testing.csv")
+}
+
+train <- read.csv("pml-training.csv", na.string = c("", "NA"))
+```
+
+First, we need to explore and assess the cleanliness of the data: are there missing values, Nans, which variable seem to be usable for our process, which can we safely ignore, ... ?
+
+First, a `summary(train)` shows that there are several features for which most values are missing (I won't shiw it here because it would sipply take too much space). In those cases, almost 98% of the rows have no value. In first approximation, I decided to not use those features, because imputing 19000+ missing values from 400 known values is not a good idea.
+
+What are the features that have too many missing values ?
+
+```{r}
+# compute a vector with the fraction of missing values for
+missValuesFraction <- unname(apply(X = train, MARGIN = 2, FUN = function(x){1 - (table(is.na(x))[1]/sum(table(is.na(x))))[[1]]}))
+
+unique(missValuesFraction)
+```
+
+We can see that either the features have all their values, or ~98% are missing. I will get rid of the latter.
+
+```{r}
+missIndex <- which(missValuesFraction > 0)
+train <- train[, -missIndex]
+```
+
+The 60 remaining features (59 + class) are free of missing values, and ready to be used.
+
+# Features
+
+We have a total of 59 variables to use to predict the class variable. However, we don't have to use them as is, or even use all of them. For example, the X variable, which is just the row name, or the name of the user doesn't seem particularly interesting. At a first glance, it seems that the timestamps value are not to be used. They're is clearly a correlation between the class and the cvtd_timestamp variable; however, the features that should be used are those that come from the measure devices. I will use column 8 to 59 as features to predict the class of the exercise.
+
+```{r}
+train <- train[, 8:60]
+trainInputs <- train[, 8:59]
+trainTargets <- train[, 60]
+```
+

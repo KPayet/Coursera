@@ -47,7 +47,62 @@ We have a total of 59 variables to use to predict the class variable. However, w
 
 ```{r}
 train <- train[, 8:60]
-trainInputs <- train[, 8:59]
-trainTargets <- train[, 60]
 ```
 
+# Training a Support Vector Machine
+
+I will use the e1071 package for the machine learning part of this project. I used SVMs with a radial basis kernel. Once the kernel has been chosen, the svm function of the package has 2 hyperparameters that need to be tuned, gamma and cost.
+
+e1071 has a tune function that uses cross-validation or bootstrapping to find the bast values for the parameters; however, it is a bit slow. So, I wrote a little function to do the tuning, that can be run on multiple processors. It can be found in the project_functions.R.
+
+```{r eval=FALSE}
+source("project_functions.R")
+
+tune_SVM(trainData = list(inputs = train[, 1:52], targets = train[,53]), gammas = c(0.01, 0.1, 0.5, 1, 5), costs = c(0.01, 0.1, 1, 10, 100)))
+```
+
+For each (gamma, cost) pair, the function uses 10-fold cross-validation to get an estimate of the classification error. The dataset is cut into 10 folds, then an svm is trained on 9 out of the 10 folds, and the resulting model is used to predict the classes of the remaining fold. The comparison between the predicted classes and the true labels gives the classification error. This is done 10 times, each time leaving one fold out. The classification error for a given pair (gamma, cost) is then simply the average of the errors for each folds configuration. The best parameters are those who give rise to the lowest classification error.
+
+The tuning gives me a gamma value of 0.1 and cost = 25. A last SVM can then be trained on the entire training set using these values.
+
+```{r eval=FALSE}
+library(e1071)
+
+# when using SVM, it is important to scale the training inputs first
+preObj <- preProcess(train[,1:52], method = c("center", "scale"))
+train[,1:52] <- predict(preObj, train[,1:52])
+
+model <- svm(x = train[,1:52], y = train[,53], scale = F, type = "C-classification", kernel = "radial", gamma = 0.1, cost = 25)
+```
+
+Prediction for a test set can then be done simply with:
+
+```{r eval=FALSE}
+predictions <- predict(model, test) # test here is a data.frame with 52 features
+```
+
+# Generalization error
+
+We are also interested in the generalization error of the trained model. I have used cross-validation to obtain an estimate of this error. 
+
+The idea is pretty simple. I divide the training set in k folds. Then, I use a fraction $\frac{k-1}{k}$ as training set and the remaining $\frac{1}{k}$ as validation set. I have k training sets and validation sets. For each of these, I apply the exact same procedure that I've used above:
+1. Use the tune_SVM function on the training set to get the best parameters
+2. Train an SVM using these parameters on the training set
+3. Predict the validation set's targets
+4. Compare with the true classes and compute the generalization error
+
+I do this k times, for each fold, and take the average of the generalization errors obtained, and this last value is the estimate of the generalization model of my model.
+
+The function genError in project_functions.R does the process described above.
+
+```{r eval=FALSE}
+source("project_functions.R")
+
+genError(data = train, k = 5) # 5-fold cross-validation
+```
+
+```{r echo=FALSE}
+print("Generalization error:  0.0126386833913436")
+```
+
+The generalization error is a little above 1%. More probably, this is an upper bound to the error, but the true error should of the same error of magnitude.

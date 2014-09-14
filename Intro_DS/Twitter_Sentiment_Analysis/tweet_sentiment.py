@@ -6,10 +6,10 @@ def sentiment(tweet, scores):
     out_score = 0
 
     # create a list of words from the tweet
-    words = tweet.encode("utf-8").split()
+    words = tweet.encode("utf-8").split().lower()
 
     for word in words:
-        if word in list(scores.keys()):
+        if " " + word in list(scores.keys()):
             out_score += scores[word]
 
     return out_score

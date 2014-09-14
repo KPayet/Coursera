@@ -1,5 +1,6 @@
 import oauth2 as oauth
 import urllib2 as urllib
+import json
 
 # See assignment1.html instructions or README for how to get these credentials
 
@@ -57,7 +58,25 @@ def fetchsamples():
     parameters = []
     response = twitterreq(url, "GET", parameters)
     for line in response:
-        print line.strip()
+        json_tree = json.loads(line)
+        if "text" not in list(json_tree.keys()):
+            continue
+
+        if json_tree["lang"] != "en":
+            continue
+
+        if json_tree.get("place") is None:
+            continue
+
+        place_info = json_tree.get("place")
+        if place_info.get("country_code") is None:
+            continue
+
+        country_code = place_info.get("country_code")
+        if country_code != "US":
+            continue
+
+        print(line.strip())
 
 if __name__ == '__main__':
     fetchsamples()

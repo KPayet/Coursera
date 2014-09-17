@@ -90,6 +90,7 @@ predictions <- predict(model, test) # test here is a data.frame with 52 features
 We are also interested in the generalization error of the trained model. I have used cross-validation to obtain an estimate of this error. 
 
 The idea is pretty simple. I divide the training set in k folds. Then, I use a fraction $\frac{k-1}{k}$ as training set and the remaining $\frac{1}{k}$ as validation set. I have k training sets and validation sets. For each of these, I apply the exact same procedure that I've used above:
+
 1. Use the tune_SVM function on the training set to get the best parameters
 2. Train an SVM using these parameters on the training set
 3. Predict the validation set's targets

@@ -1,15 +1,11 @@
----
-title: "Practical Machine Learning Project"
-author: "Kevin Payet"
-date: "Friday, September 12, 2014"
-output:
-  html_document:
-    keep_md: yes
----
+# Practical Machine Learning Project
+Kevin Payet  
+Friday, September 12, 2014  
 
 # Getting and preparing the data
 
-```{r}
+
+```r
 if(!file.exists("pml-training.csv")) {
     url_train <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"
     download.file(url_train, destfile = "./pml-training.csv")
@@ -27,16 +23,22 @@ First, a `summary(train)` shows that there are several features for which most v
 
 What are the features that have too many missing values ?
 
-```{r}
+
+```r
 # compute a vector with the fraction of missing values for
 missValuesFraction <- unname(apply(X = train, MARGIN = 2, FUN = function(x){1 - (table(is.na(x))[1]/sum(table(is.na(x))))[[1]]}))
 
 unique(missValuesFraction)
 ```
 
+```
+## [1] 0.0000 0.9793
+```
+
 We can see that either the features have all their values, or ~98% are missing. I will get rid of the latter.
 
-```{r}
+
+```r
 missIndex <- which(missValuesFraction > 0)
 train <- train[, -missIndex]
 ```
@@ -47,7 +49,8 @@ The 60 remaining features (59 + class) are free of missing values, and ready to 
 
 We have a total of 59 variables to use to predict the class variable. However, we don't have to use them as is, or even use all of them. For example, the X variable, which is just the row name, or the name of the user doesn't seem particularly interesting. At a first glance, it seems that the timestamps value are not to be used. They're is clearly a correlation between the class and the cvtd_timestamp variable; however, the features that should be used are those that come from the measure devices. I will use column 8 to 59 as features to predict the class of the exercise.
 
-```{r}
+
+```r
 train <- train[, 8:60]
 ```
 
@@ -57,7 +60,8 @@ I used the e1071 package for the machine learning part of this project. I used S
 
 e1071 has a tune function that uses cross-validation or bootstrapping to find the best values for the parameters; however, it is a bit slow. So, I wrote a little function to do the tuning, that can be run on multiple processors. It can be found in the project_functions.R.
 
-```{r eval=FALSE}
+
+```r
 source("project_functions.R")
 
 tune_SVM(trainData = list(inputs = train[, 1:52], targets = train[,53]), gammas = c(0.01, 0.1, 0.25, 0.5, 1, 5), costs = c(0.01, 0.1, 1, 10, 25, 50, 100)))
@@ -67,7 +71,8 @@ For each (gamma, cost) pair, the function uses 10-fold cross-validation to get a
 
 The tuning yielded a gamma value of 0.1 and cost = 25. A last SVM can then be trained on the entire training set using these values.
 
-```{r eval=FALSE}
+
+```r
 library(e1071)
 
 # when using SVM, it is important to scale the training inputs first
@@ -79,7 +84,8 @@ model <- svm(x = train[,1:52], y = train[,53], scale = F, type = "C-classificati
 
 Prediction for a test set can then be done simply with:
 
-```{r eval=FALSE}
+
+```r
 test[,1:52] <- predict(preObj, test[,1:52])
 
 predictions <- predict(model, test) # test here is a data.frame with 52 features
@@ -99,14 +105,16 @@ I do this k times, for each fold, and take the average of the generalization err
 
 The function genError in project_functions.R implements the process described above.
 
-```{r eval=FALSE}
+
+```r
 source("project_functions.R")
 
 genError(data = train, k = 5) # 5-fold cross-validation
 ```
 
-```{r echo=FALSE}
-print("Generalization error:  0.0126386833913436")
+
+```
+## [1] "Generalization error:  0.0126386833913436"
 ```
 
 The generalization error is a little above 1%. More probably, this is an upper bound to the error, but the true error should of the same order of magnitude.

@@ -99,16 +99,23 @@ get_data <- function(tag) {
     require(caret)
     
     train <- read.csv("pml-training.csv", na.string = c("", "NA"))
+    test <- read.csv("pml-testing.csv", na.string = c("", "NA"))
     missValuesFraction <- unname(apply(X = train, MARGIN = 2, FUN = function(x){1 - (table(is.na(x))[1]/sum(table(is.na(x))))[[1]]}))
     missIndex <- which(missValuesFraction > 0)
     train <- train[, -missIndex]
+    test <- test[, -missIndex]
     train <- train[, 8:60]
+    test <- test[, 8:60]
     preObj <- preProcess(train[, 1:52], method = c("center", "scale"))
     
     train[,1:52] <- predict(preObj, train[,1:52])
     
+    test[,1:52] <- predict(preObj, test[,1:52])
+    
     if(tag=="train")
         return(train)
+    else
+        return(test)
 }
 
 genError <- function(data, k = 5){

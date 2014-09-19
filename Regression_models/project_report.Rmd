@@ -64,7 +64,7 @@ We can try simply using all the features at once `lm(mpg ~ .)`; however, the t-v
 This is a pretty long process, and given the lack of space for this report, I will directly give the model I finally used.
 
 ```{r}
-summ2 <- summary(lm(mpg ~ am + wt + am:(wt) + wt:qsec, data = mtcars))
+summ2 <- summary(lm(mpg ~ am*wt + wt:qsec, data = mtcars))
 summ2$coef
 ```
 
@@ -74,23 +74,33 @@ Figure 3 shows the mpg value as a function of the weight wt, for both type of tr
 
 The red and black lines are automatic and manual transmissions respectively. We see that for low weights, the effect is what we expect, based on what we saw earlier: manual transmission implies higher mpg than automatic one. However, for higher weights, this order is reversed. It is hard to tell if this effect is real, and if it is, if the difference is that big. As said earlier, the model used is most probably incomplete. To study this effect in more details would require to push the study further, which goes beyond the goal of this project.
 
+Figure 4 shows some diagnostic plots for the model used. We see that there is no real problem with our model: no heteroskedasticity, residuals are pretty much normal.
+
 ## Conclusions
 
 We have seen that the type of transmission can influence the average fuel consumption of a car. It seems that manual cars tend to use less fuel than automatic ones. However, the effect is hard to quantify, due to the high correlation between most variables, and the fact that the real model seems to include interactions betweens the various features. 
+
+$$
+\vspace*{2cm}
+$$
 
 # Appendix
 
 ### Figure 1: Correlation matrix of the data
 
-```{r message=FALSE, comment=FALSE, warning=FALSE}
+```{r message=FALSE, comment=FALSE, warning=FALSE, fig.width=5, fig.height=5}
 library(corrplot)
 
 corrplot(abs(cor(mtcars2)))
 ```
 
+$$
+\vspace*{3cm}
+$$
+
 ###  Figure 2: Difference in mpg between automatic and manual transmissions
 
-```{r message=FALSE, warning=FALSE, comment=FALSE}
+```{r message=FALSE, warning=FALSE, comment=FALSE, fig.width=5, fig.height=5}
 library(ggplot2)
 
 g <- ggplot(data = mtcars, aes(x = am, y = mpg))
@@ -100,8 +110,30 @@ g
 
 ```
 
+$$
+\vspace*{3cm}
+$$
+
 ### Figure 3: MPG vs Weight, for both transmissions
 
-```{r}
+```{r, fig.width=5, fig.height=5}
 ggplot(data = mtcars, aes(x = wt, y = mpg)) + geom_point() +  geom_abline(intercept = 28.2691, slope = I(17.85*0.2978-8.3286), col = "red") + geom_abline(intercept = I(28.2691+14.1990), slope = I(-8.6286-4.2533+17.85*0.2978))
+```
+
+$$
+\vspace*{5cm}
+$$
+
+### Figure 4: Diagnostic plots for the final model
+
+```{r eval=FALSE, fig.width=5, fig.height=5}
+fit <- lm(mpg ~ am*wt + wt:qsec, data = mtcars)
+par(mfrow = c(2,2))
+plot(fit)
+```
+
+```{r echo=FALSE, fig.width=5, fig.height=5}
+fit <- lm(mpg ~ am + wt + hp, data = mtcars)
+par(mfrow = c(2,2))
+plot(fit)
 ```
